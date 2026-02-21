@@ -14,6 +14,7 @@ import pandas as pd
 from typing import List, Optional, Dict, Any
 import dash
 from dash import html
+import random
 
 
 class ProcessingTimeTimeline:
@@ -21,12 +22,20 @@ class ProcessingTimeTimeline:
     
     def __init__(self, element_colors: Optional[Dict[str, str]] = None):
         """Initialize with optional color scheme."""
-        self.element_colors = element_colors or {
-            'capsfilter0': '#1f77b4',
-            'capsfilter1': '#ff7f0e', 
-            'videoconvert0': '#2ca02c',
-            'videoscale0': '#d62728'
-        }
+        # If custom colors provided, use them; otherwise use random colors
+        if element_colors:
+            self.element_colors = element_colors
+            self.use_random_colors = False
+        else:
+            self.element_colors = {}
+            self.use_random_colors = True
+            # Use a diverse color palette for random selection
+            self.color_palette = [
+                '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+                '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+                '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5',
+                '#f7cec6', '#dbdb8d', '#9edae5', '#addd8e', '#ff9f9c'
+            ]
     
     def create_figure(self, df: pd.DataFrame, 
                      show_rolling_avg: bool = True,
@@ -59,8 +68,15 @@ class ProcessingTimeTimeline:
         if visible_elements is None:
             visible_elements = all_elements
         
+        # Generate random colors for elements if needed
+        if self.use_random_colors:
+            random.shuffle(self.color_palette)
+            for i, element in enumerate(all_elements):
+                if element not in self.element_colors:
+                    self.element_colors[element] = self.color_palette[i % len(self.color_palette)]
+        
         # Group by element and create line plots
-        for element in all_elements:
+        for i, element in enumerate(all_elements):
             element_df = df[df['element_name'] == element].copy()
             
             # Sort by timestamp
@@ -68,6 +84,9 @@ class ProcessingTimeTimeline:
             
             # Determine visibility
             is_visible = element in visible_elements
+            
+            # Get color for this element
+            element_color = self.element_colors.get(element, self.color_palette[i % len(self.color_palette)])
             
             # Add rolling average line (primary visualization)
             if show_rolling_avg and len(element_df) >= window_size:
@@ -82,7 +101,7 @@ class ProcessingTimeTimeline:
                     name=f'{element}',
                     line=dict(
                         width=2,
-                        color=self.element_colors.get(element, px.colors.qualitative.Set1[0])
+                        color=element_color
                     ),
                     visible=is_visible,
                     hovertemplate='<b>%{fullData.name}</b><br>' +
@@ -98,7 +117,7 @@ class ProcessingTimeTimeline:
                     name=f'{element}',
                     line=dict(
                         width=1,
-                        color=self.element_colors.get(element, px.colors.qualitative.Set1[0])
+                        color=element_color
                     ),
                     visible=is_visible,
                     hovertemplate='<b>%{fullData.name}</b><br>' +
