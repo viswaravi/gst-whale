@@ -34,15 +34,20 @@ pip install -r requirements.txt
 # Start with default log file (uses port 8051 to avoid conflicts)
 python plotter/dashboard_app.py
 
-# Or specify a custom log file and port
-python -c "
-from plotter.dashboard_app import create_dashboard
-dashboard = create_dashboard('path/to/your/log.log')
-dashboard.run(debug=True, port=8052)
-"
+# Specify custom log file
+python plotter/dashboard_app.py --log-file /path/to/your/proctime.log
+
+# Use short form and custom port
+python plotter/dashboard_app.py -l ./logs/proctime.log --port 8050
+
+# Enable debug mode
+python plotter/dashboard_app.py --debug
+
+# Show help
+python plotter/dashboard_app.py --help
 ```
 
-Then open http://localhost:8051 in your browser.
+Then open http://localhost:8051 in your browser (or your specified port).
 
 ### Testing
 ```bash

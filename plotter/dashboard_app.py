@@ -362,14 +362,60 @@ def create_dashboard(log_file: str, **kwargs) -> GstWhaleDashboard:
 
 
 if __name__ == "__main__":
-    # Example usage
-    log_file = os.path.join(os.path.dirname(__file__), '..', 'logs', 'shark', 'proctime.log')
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='GST-Whale Dashboard for GStreamer log analysis')
+    parser.add_argument(
+        '--log-file', 
+        '-l',
+        type=str,
+        help='Path to the GStreamer log file (default: ../logs/shark/proctime.log)'
+    )
+    parser.add_argument(
+        '--port', 
+        '-p',
+        type=int,
+        default=8051,
+        help='Port to run the dashboard on (default: 8051)'
+    )
+    parser.add_argument(
+        '--debug', 
+        action='store_true',
+        help='Enable debug mode'
+    )
+    
+    args = parser.parse_args()
+    
+    # Determine log file path
+    if args.log_file:
+        log_file = args.log_file
+        # Convert relative path to absolute if needed
+        if not os.path.isabs(log_file):
+            log_file = os.path.abspath(log_file)
+    else:
+        # Default log file path
+        log_file = os.path.join(os.path.dirname(__file__), '..', 'logs', 'shark', 'proctime.log')
+    
+    print(f"GST-Whale Dashboard")
+    print(f"Log file: {log_file}")
+    print(f"Port: {args.port}")
+    print(f"Debug mode: {args.debug}")
+    print("-" * 50)
     
     if os.path.exists(log_file):
-        dashboard = create_dashboard(log_file)
-        print(f"Starting GST-Whale Dashboard...")
-        print(f"Open http://localhost:8051 in your browser")
-        dashboard.run(debug=True, port=8051)
+        try:
+            dashboard = create_dashboard(log_file)
+            print(f"Starting GST-Whale Dashboard...")
+            print(f"Open http://localhost:{args.port} in your browser")
+            dashboard.run(debug=args.debug, port=args.port)
+        except Exception as e:
+            print(f"Error creating dashboard: {e}")
+            print("Please check the log file format and dependencies.")
     else:
-        print(f"Log file not found: {log_file}")
-        print("Please update the log file path or ensure the file exists.")
+        print(f"❌ Log file not found: {log_file}")
+        print("Please provide a valid log file path using --log-file or ensure the default file exists.")
+        print("\nExample usage:")
+        print("  python dashboard_app.py --log-file /path/to/your/proctime.log")
+        print("  python dashboard_app.py -l ./logs/proctime.log --port 8050")
+        print("  python dashboard_app.py --debug")
