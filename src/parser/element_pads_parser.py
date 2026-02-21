@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import re
 
-from gst_trace_cli.model.events import PadLinkAttempt, PadLinkFailure, PadLinkSuccess
-from gst_trace_cli.parser.base_parser import BaseParser, LogLine
-from gst_trace_cli.registry.gst_registry import GstRegistry
+from model.events import PadLinkAttempt, PadLinkFailure, PadLinkSuccess
+from parser.base_parser import BaseParser, LogLine
+from registry.gst_registry import GstRegistry
 
 
 LINK_ATTEMPT_RE = re.compile(

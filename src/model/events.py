@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
-from gst_trace_cli.model.pad import GstPad
+from model.pad import GstPad
 
 
 LinkKey = tuple[str, str]
@@ -33,6 +33,53 @@ class GstEvent:
 
     def lines(self) -> list[str]:
         raise NotImplementedError
+
+
+@dataclass
+class SharkTracerEvent(GstEvent):
+    """Base class for all shark tracer events."""
+    tracer_type: str
+    element_name: str
+    
+    def __post_init__(self):
+        # Set a default link_key for tracer events (they don't have pad links)
+        if self.link_key == ("", ""):
+            object.__setattr__(self, 'link_key', (self.element_name, self.element_name))
+
+
+@dataclass
+class ProcTimeEvent(SharkTracerEvent):
+    """Event representing processing time from proctime tracer."""
+    processing_time: float
+    processing_time_str: str  # Original timestamp string from log
+    
+    def title(self) -> str:
+        return "PROC TIME"
+    
+    def lines(self) -> list[str]:
+        return self._lines_with_via([
+            f"  Element: {self.element_name}",
+            f"  Processing time: {self.processing_time_str} ({self.processing_time:.6f}s)"
+        ])
+
+
+@dataclass
+class InterLatencyEvent(SharkTracerEvent):
+    """Event representing inter-latency from interlatency tracer."""
+    latency: float
+    latency_str: str
+    src_element: str
+    sink_element: str
+    
+    def title(self) -> str:
+        return "INTER LATENCY"
+    
+    def lines(self) -> list[str]:
+        return self._lines_with_via([
+            f"  Source: {self.src_element}",
+            f"  Sink: {self.sink_element}",
+            f"  Latency: {self.latency_str} ({self.latency:.6f}s)"
+        ])
 
 
 @dataclass

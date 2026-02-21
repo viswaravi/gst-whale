@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
-from gst_trace_cli.model.element import GstElement
-from gst_trace_cli.model.events import (
+from model.element import GstElement
+from model.events import (
     CapsCompatible,
     CapsFiltered,
     CapsQueryStart,
@@ -15,8 +15,9 @@ from gst_trace_cli.model.events import (
     PadLinkAttempt,
     PadLinkFailure,
     PadLinkSuccess,
+    SharkTracerEvent,
 )
-from gst_trace_cli.model.pad import GstPad
+from model.pad import GstPad
 
 
 @dataclass
@@ -40,6 +41,10 @@ class GstRegistry:
     pads: dict[str, GstPad] = field(default_factory=dict)
     links: set[tuple[str, str]] = field(default_factory=set)
     events: list[GstEvent] = field(default_factory=list)
+    
+    # Shark tracer specific fields
+    shark_events: list[SharkTracerEvent] = field(default_factory=list)
+    element_processing_times: dict[str, list[float]] = field(default_factory=dict)
 
     active_caps_queries: dict[str, list[ActiveCapsQuery]] = field(default_factory=dict)
     last_link_key_for_pad: dict[str, LinkKey] = field(default_factory=dict)
@@ -130,6 +135,40 @@ class GstRegistry:
 
     def add_event(self, ev: GstEvent) -> None:
         self.events.append(ev)
+
+    def add_shark_event(self, ev: SharkTracerEvent) -> None:
+        """Add a shark tracer event and update element statistics."""
+        ev.order = self.next_order()
+        self.shark_events.append(ev)
+        self.events.append(ev)  # Also add to main events list
+        
+        # Update element processing times
+        if ev.tracer_type == "proctime":
+            from model.events import ProcTimeEvent
+            if isinstance(ev, ProcTimeEvent):
+                self.element_processing_times.setdefault(ev.element_name, []).append(ev.processing_time)
+        
+        # Ensure element exists in registry
+        self.get_or_create_element(ev.element_name)
+
+    def get_element_processing_stats(self, element_name: str) -> Optional[dict]:
+        """Get processing time statistics for an element."""
+        times = self.element_processing_times.get(element_name)
+        if not times:
+            return None
+        
+        return {
+            'count': len(times),
+            'total': sum(times),
+            'min': min(times),
+            'max': max(times),
+            'avg': sum(times) / len(times)
+        }
+
+    def get_all_processing_stats(self) -> dict[str, dict]:
+        """Get processing time statistics for all elements."""
+        return {name: self.get_element_processing_stats(name) 
+                for name in self.element_processing_times.keys()}
 
     def ensure_caps_query(self, ts: float, target: GstPad) -> ActiveCapsQuery:
         q = self.get_active_caps_query(target)

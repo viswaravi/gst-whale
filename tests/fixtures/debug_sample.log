@@ -1,0 +1,3 @@
+0:00:00.001234567 12345 0xabcdef DEBUG GST_PADS trying to link element src:sink to element sink:sink
+0:00:00.002345678 12345 0xabcdef DEBUG GST_CAPS caps are compatible
+0:00:00.003456789 12345 0xabcdef DEBUG GST_PADS link successful src:sink -> sink:sink

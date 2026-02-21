@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from gst_trace_cli.model.events import (
+from model.events import (
     CapsCompatible,
     CapsFiltered,
     CapsIntersection,
@@ -21,9 +21,9 @@ from gst_trace_cli.model.events import (
     CapsTransformed,
     ReconfigureTriggered,
 )
-from gst_trace_cli.parser.base_parser import BaseParser, LogLine
-from gst_trace_cli.parser.base_parser import GstLogLineParser
-from gst_trace_cli.registry.gst_registry import GstRegistry
+from parser.base_parser import BaseParser, LogLine
+from parser.base_parser import GstLogLineParser
+from registry.gst_registry import GstRegistry
 
 
 PEER_MISSING_RE = re.compile(r"pad has no peer")

@@ -1,0 +1,3 @@
+0:00:00.001234567 12345 0xabcdef TRACE GST_TRACER :0:: proctime, element=(string)test1, time=(string)0:00:00.001;
+0:00:00.002345678 12345 0xabcdef TRACE GST_TRACER :0:: proctime, element=(string)test2, time=(string)0:00:00.002;
+0:00:00.003456789 12345 0xabcdef TRACE GST_TRACER :0:: proctime, element=(string)test1, time=(string)0:00:00.003;
