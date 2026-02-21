@@ -44,7 +44,6 @@ class GstWhaleDashboard:
     def _setup_layout(self):
         """Setup the dashboard layout."""
         # Get initial data
-        element_list = self.data_provider.get_element_list()
         time_range = self.data_provider.get_time_range()
         event_summary = self.data_provider.get_event_summary()
         
@@ -56,18 +55,6 @@ class GstWhaleDashboard:
         sidebar = dbc.Card([
             dbc.CardBody([
                 html.H4("GST-Whale Dashboard", className="card-title"),
-                html.Hr(),
-                
-                # Element filter
-                html.H6("Element Filter", className="text-muted"),
-                dcc.Dropdown(
-                    id='element-dropdown',
-                    options=[{'label': 'All Elements', 'value': ''}] + 
-                           [{'label': elem, 'value': elem} for elem in element_list],
-                    value='',
-                    multi=True,
-                    placeholder="Select elements..."
-                ),
                 html.Hr(),
                 
                 # Element visibility controls
@@ -190,41 +177,65 @@ class GstWhaleDashboard:
              Output('stats-graph', 'figure'),
              Output('distribution-graph', 'figure'),
              Output('stats-table', 'children')],
-            [Input('element-dropdown', 'value'),
-             Input('time-range-slider', 'value'),
+            [Input('time-range-slider', 'value'),
              Input('viz-options', 'value'),
              Input('element-visibility-checklist', 'value')]
         )
-        def update_visualizations(selected_elements, time_range, viz_options, visible_elements):
+        def update_visualizations(time_range, viz_options, visible_elements):
             """Update all visualizations based on filters."""
             
-            # Process element filter
-            element_filter = None
-            if selected_elements and isinstance(selected_elements, list):
-                if len(selected_elements) > 0 and selected_elements != ['']:
-                    element_filter = selected_elements[0] if len(selected_elements) == 1 else '|'.join(selected_elements)
-            elif selected_elements:
-                element_filter = selected_elements
-            
-            # Get data
+            # Get data (no element filter needed since visibility controls handle it)
             timeline_df = self.data_provider.get_timeline_data(
-                element_filter=element_filter,
                 start_time=time_range[0],
                 end_time=time_range[1]
             )
             
-            stats_df = self.data_provider.get_element_statistics(element_filter)
+            stats_df = self.data_provider.get_element_statistics()
             
             # Create figures using new components
             show_rolling = 'rolling' in viz_options
+            show_stats = 'stats' in viz_options
+            show_dist = 'dist' in viz_options
+            
             timeline_fig = self.timeline.create_figure(
                 timeline_df, 
                 show_rolling_avg=show_rolling,
                 visible_elements=visible_elements
             )
-            stats_fig = self.stats.create_bar_chart(stats_df)
-            dist_fig = self._create_distribution_figure(timeline_df)
-            stats_table = self._create_stats_table(stats_df)
+            
+            # Create stats figure only if stats is enabled
+            if show_stats:
+                stats_fig = self.stats.create_bar_chart(stats_df)
+            else:
+                stats_fig = go.Figure().add_annotation(
+                    text="Statistics disabled", 
+                    xref="paper", yref="paper",
+                    x=0.5, y=0.5, showarrow=False,
+                    font=dict(size=16, color='gray')
+                )
+                stats_fig.update_layout(
+                    xaxis=dict(visible=False),
+                    yaxis=dict(visible=False),
+                    plot_bgcolor='rgba(0,0,0,0)'
+                )
+            
+            # Create distribution figure only if distribution is enabled
+            if show_dist:
+                dist_fig = self._create_distribution_figure(timeline_df)
+            else:
+                dist_fig = go.Figure().add_annotation(
+                    text="Distribution disabled", 
+                    xref="paper", yref="paper",
+                    x=0.5, y=0.5, showarrow=False,
+                    font=dict(size=16, color='gray')
+                )
+                dist_fig.update_layout(
+                    xaxis=dict(visible=False),
+                    yaxis=dict(visible=False),
+                    plot_bgcolor='rgba(0,0,0,0)'
+                )
+            
+            stats_table = self._create_stats_table(stats_df) if show_stats else html.P("Statistics disabled")
             
             return timeline_fig, stats_fig, dist_fig, stats_table
     
