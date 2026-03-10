@@ -14,7 +14,7 @@ import pandas as pd
 from typing import Dict, List, Any, Optional
 
 from .base_visualizer import BaseVisualizer, visualizer_registry
-from ..components.processing_time_plots import (
+from components.processing_time_plots import (
     ProcessingTimeTimeline, 
     ProcessingTimeStats, 
     ProcessingTimeHeatmap

@@ -1,0 +1,12 @@
+0:00:00.012496499 16882 0x5d71d19af2c0 DEBUG GST_TRACER gsttracer.c:172:gst_tracer_register:<registry0> update existing feature 0x5d71d17509c0 (cpuusage)
+0:00:00.012552938 16882 0x5d71d19af2c0 DEBUG GST_TRACER gsttracer.c:172:gst_tracer_register:<registry0> update existing feature 0x5d71d17f26c0 (graphic)
+0:00:00.012579365 16882 0x5d71d19af2c0 DEBUG GST_TRACER gsttracer.c:172:gst_tracer_register:<registry0> update existing feature 0x5d71d17f2870 (proctime)
+0:00:00.012604394 16882 0x5d71d19af2c0 DEBUG GST_TRACER gsttracer.c:172:gst_tracer_register:<registry0> update existing feature 0x5d71d17f29d0 (interlatency)
+0:00:00.109414140 16882 0x7c45040010c0 TRACE GST_TRACER :0:: interlatency, from_pad=(string)videotestsrc0_src, to_pad=(string)capsfilter0_src, time=(string)0:00:00.000010769;
+0:00:00.112628514 16882 0x7c45040010c0 TRACE GST_TRACER :0:: interlatency, from_pad=(string)videotestsrc0_src, to_pad=(string)appsink_sink, time=(string)0:00:00.003225955;
+0:00:00.117011381 16882 0x7c4504000e60 TRACE GST_TRACER :0:: interlatency, from_pad=(string)appsrc_src, to_pad=(string)gluploadelement0_src, time=(string)0:00:00.002201642;
+0:00:00.130345431 16882 0x7c4504000e60 TRACE GST_TRACER :0:: interlatency, from_pad=(string)appsrc_src, to_pad=(string)glcolorconvertelement0_src, time=(string)0:00:00.015502258;
+0:00:00.130541162 16882 0x7c4504000e60 TRACE GST_TRACER :0:: interlatency, from_pad=(string)appsrc_src, to_pad=(string)glcolorbalance0_src, time=(string)0:00:00.015735293;
+0:00:00.130622292 16882 0x7c4504000e60 TRACE GST_TRACER :0:: interlatency, from_pad=(string)appsrc_src, to_pad=(string)sink_sink, time=(string)0:00:00.015735293;
+0:00:00.165495008 16882 0x7c45040010c0 TRACE GST_TRACER :0:: interlatency, from_pad=(string)videotestsrc0_src, to_pad=(string)capsfilter0_src, time=(string)0:00:00.000031883;
+0:00:00.166510394 16882 0x7c45040010c0 TRACE GST_TRACER :0:: interlatency, from_pad=(string)videotestsrc0_src, to_pad=(string)appsink_sink, time=(string)0:00:00.001050912;

@@ -18,7 +18,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from registry.gst_registry import GstRegistry
-from model.events import ProcTimeEvent, SharkTracerEvent
+from model.events import ProcTimeEvent, InterLatencyEvent, SharkTracerEvent
 
 
 class GstDataProvider:
@@ -111,6 +111,135 @@ class GstDataProvider:
         
         return df
     
+    def get_interlatency_data(self, 
+                             element_filter: Optional[str] = None,
+                             source_filter: Optional[str] = None,
+                             sink_filter: Optional[str] = None,
+                             path_filter: Optional[str] = None,
+                             start_time: Optional[float] = None,
+                             end_time: Optional[float] = None) -> pd.DataFrame:
+        """
+        Extract interlatency data as a pandas DataFrame.
+        
+        Args:
+            element_filter: Filter by element name (partial match)
+            source_filter: Filter by source element name (partial match)
+            sink_filter: Filter by sink element name (partial match)
+            path_filter: Filter by path (source->sink) (partial match)
+            start_time: Start timestamp filter
+            end_time: End timestamp filter
+            
+        Returns:
+            DataFrame with columns: timestamp, src_element, sink_element, latency_ms, path_id
+        """
+        interlatency_events = [ev for ev in self.registry.shark_events 
+                              if isinstance(ev, InterLatencyEvent)]
+        
+        # Apply filters
+        if element_filter:
+            interlatency_events = [ev for ev in interlatency_events 
+                                  if element_filter in ev.src_element or element_filter in ev.sink_element]
+        
+        if source_filter:
+            interlatency_events = [ev for ev in interlatency_events 
+                                  if source_filter in ev.src_element]
+        
+        if sink_filter:
+            interlatency_events = [ev for ev in interlatency_events 
+                                  if sink_filter in ev.sink_element]
+        
+        if path_filter:
+            interlatency_events = [ev for ev in interlatency_events 
+                                  if path_filter in f"{ev.src_element}->{ev.sink_element}"]
+        
+        if start_time is not None:
+            interlatency_events = [ev for ev in interlatency_events 
+                                  if ev.ts >= start_time]
+        
+        if end_time is not None:
+            interlatency_events = [ev for ev in interlatency_events 
+                                  if ev.ts <= end_time]
+        
+        # Convert to DataFrame
+        data = []
+        for event in interlatency_events:
+            path_id = f"{event.src_element}->{event.sink_element}"
+            data.append({
+                'timestamp': event.ts,
+                'src_element': event.src_element,
+                'sink_element': event.sink_element,
+                'latency_ms': event.latency * 1000,  # Convert to ms
+                'latency_s': event.latency,
+                'latency_str': event.latency_str,
+                'path_id': path_id,
+                'order': event.order
+            })
+        
+        df = pd.DataFrame(data)
+        if not df.empty:
+            df = df.sort_values('timestamp')
+        
+        return df
+    
+    def get_pipeline_paths(self) -> List[str]:
+        """
+        Get list of all unique pipeline paths (source->sink).
+        
+        Returns:
+            List of unique path identifiers
+        """
+        interlatency_events = [ev for ev in self.registry.shark_events 
+                              if isinstance(ev, InterLatencyEvent)]
+        
+        paths = set()
+        for event in interlatency_events:
+            path_id = f"{event.src_element}->{event.sink_element}"
+            paths.add(path_id)
+        
+        return sorted(list(paths))
+    
+    def get_path_statistics(self, path_filter: Optional[str] = None) -> pd.DataFrame:
+        """
+        Get summary statistics for each pipeline path.
+        
+        Args:
+            path_filter: Filter by path (source->sink) (partial match)
+            
+        Returns:
+            DataFrame with statistics per path
+        """
+        df = self.get_interlatency_data()
+        
+        if df.empty:
+            return pd.DataFrame()
+        
+        # Apply path filter
+        if path_filter:
+            df = df[df['path_id'].str.contains(path_filter, case=False, na=False)]
+        
+        # Group by path and compute statistics
+        stats = df.groupby('path_id').agg({
+            'latency_ms': ['count', 'mean', 'min', 'max', 'std'],
+            'src_element': 'first',
+            'sink_element': 'first'
+        }).round(3)
+        
+        # Flatten column names
+        stats.columns = ['count', 'avg_latency_ms', 'min_latency_ms', 'max_latency_ms', 'std_latency_ms', 'src_element', 'sink_element']
+        
+        # Add total latency (sum of all latencies for this path)
+        total_latency = df.groupby('path_id')['latency_ms'].sum().round(3)
+        stats['total_latency_ms'] = total_latency
+        
+        # Reset index to make path_id a column
+        stats = stats.reset_index()
+        stats = stats.rename(columns={'index': 'path_id'})
+        
+        # Sort by average latency
+        stats = stats.sort_values('avg_latency_ms', ascending=False)
+        
+        return stats
+    
     def get_timeline_data(self, 
                          element_filter: Optional[str] = None,
                          start_time: Optional[float] = None,
@@ -164,6 +293,8 @@ class GstDataProvider:
             'shark_events': len(self.registry.shark_events),
             'proctime_events': len([ev for ev in self.registry.shark_events 
                                   if isinstance(ev, ProcTimeEvent)]),
+            'interlatency_events': len([ev for ev in self.registry.shark_events 
+                                      if isinstance(ev, InterLatencyEvent)]),
             'elements': len(self.registry.elements),
             'pads': len(self.registry.pads),
             'links': len(self.registry.links)

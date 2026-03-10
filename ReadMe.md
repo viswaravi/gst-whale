@@ -14,7 +14,12 @@ GST_DEBUG_FILE=caps.log GST_DEBUG="GST_PADS:5,GST_CAPS:5" gst-launch-1.0 videote
 The goal is to visualize values from gst-shark tracers for runtime analysis
 
 - Install gst-shark tracers in system 
-- Run example pipeline to get gst-shark tracer logs
+- Run example pipeline to get gst-shark tracer logs for `proctime` tracer
 ```
-GST_DEBUG_FILE=shark.log GST_DEBUG="GST_TRACER:7" GST_TRACERS="proctime" gst-launch-1.0 videotestsrc ! video/x-raw,format=RGB,width=320,height=240 ! videoconvert ! videoscale ! video/x-raw,format=I420,width=640,height=480 ! fakesink
+GST_DEBUG_FILE=proctime.log GST_DEBUG="GST_TRACER:7" GST_TRACERS="proctime" gst-launch-1.0 videotestsrc ! video/x-raw,format=RGB,width=320,height=240 ! videoconvert ! videoscale ! video/x-raw,format=I420,width=640,height=480 ! fakesink
+```
+
+- Run example pipeline to get gst-shark tracer logs for `interlatency` tracer
+```
+GST_DEBUG_FILE=interlatency.log GST_DEBUG="GST_TRACER:7" GST_TRACERS="interlatency" gst-launch-1.0 videotestsrc ! video/x-raw,format=RGB,width=320,height=240 ! videoconvert ! videoscale ! video/x-raw,format=I420,width=640,height=480 ! fakesink
 ```
